@@ -3,12 +3,12 @@
   "version": "1.0.0",
   "description": "Shows dice roll results from TRPG Sheet on the table",
   "author": "TRPG Sheet",
-  "icon": "/icon.svg",
-  "tokens": [],
-  "popover": {
-    "id": "trpg-sheet.dice",
-    "url": "/popover.html",
-    "height": 72,
+  "icon": "https://owlbear-one.vercel.app/icon.svg",
+  "action": {
+    "title": "TRPG Sheet Dice",
+    "icon": "https://owlbear-one.vercel.app/icon.svg",
+    "url": "https://owlbear-one.vercel.app/index.html",
+    "height": 129,
     "width": 300
   }
 }
