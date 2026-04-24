@@ -1,14 +1,12 @@
 {
   "name": "TRPG Sheet Dice",
   "version": "1.0.0",
-  "description": "Shows dice roll results from TRPG Sheet on the table",
-  "author": "TRPG Sheet",
-  "icon": "https://owlbear-one.vercel.app/icon.svg",
+  "manifest_version": 1,
   "action": {
     "title": "TRPG Sheet Dice",
-    "icon": "https://owlbear-one.vercel.app/icon.svg",
-    "url": "https://owlbear-one.vercel.app/index.html",
-    "height": 129,
-    "width": 300
+    "icon": "/icon.svg",
+    "popover": "/",
+    "height": 500,
+    "width": 320
   }
 }
