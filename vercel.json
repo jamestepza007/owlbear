@@ -3,16 +3,18 @@
     {
       "source": "/manifest.json",
       "headers": [
-        { "key": "Content-Type", "value": "application/json" },
+        { "key": "Content-Type", "value": "application/json; charset=utf-8" },
         { "key": "Access-Control-Allow-Origin", "value": "*" }
       ]
     },
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "Access-Control-Allow-Origin", "value": "*" },
-        { "key": "Access-Control-Allow-Methods", "value": "GET, OPTIONS" }
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
       ]
     }
+  ],
+  "rewrites": [
+    { "source": "/", "destination": "/index.html" }
   ]
 }
