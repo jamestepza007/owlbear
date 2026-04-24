@@ -1,0 +1,14 @@
+{
+  "name": "TRPG Sheet Dice",
+  "version": "1.0.0",
+  "description": "Shows dice roll results from TRPG Sheet on the table",
+  "author": "TRPG Sheet",
+  "icon": "/icon.svg",
+  "tokens": [],
+  "popover": {
+    "id": "trpg-sheet.dice",
+    "url": "/popover.html",
+    "height": 72,
+    "width": 300
+  }
+}
