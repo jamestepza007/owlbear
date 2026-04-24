@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://www.unpkg.com 'unsafe-inline'; connect-src *;">
 <title>TRPG Sheet Dice</title>
-<script src="https://www.unpkg.com/@owlbear-rodeo/sdk@2.9.2/lib/index.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: transparent; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
@@ -45,6 +45,7 @@
   <input type="text" id="apiUrl" placeholder="https://your-backend.railway.app/api" />
 </div>
 <div id="toasts"></div>
-<script src="app.js"></script>
+<script src="https://www.unpkg.com/@owlbear-rodeo/sdk@2.9.2/lib/index.js"></script>
+<script src="https://jamestepza007.github.io/owlbear/app.js"></script>
 </body>
 </html>
