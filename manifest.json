@@ -4,8 +4,8 @@
   "manifest_version": 1,
   "action": {
     "title": "TRPG Sheet Dice",
-    "icon": "/owlbear/icon.svg",
-    "popover": "/owlbear/",
+    "icon": "https://jamestepza007.github.io/owlbear/icon.svg",
+    "popover": "https://jamestepza007.github.io/owlbear/index.html",
     "height": 500,
     "width": 320
   }
