@@ -4,8 +4,8 @@
   "manifest_version": 1,
   "action": {
     "title": "TRPG Sheet Dice",
-    "icon": "/icon.svg",
-    "popover": "/",
+    "icon": "/owlbear/icon.svg",
+    "popover": "/owlbear/",
     "height": 500,
     "width": 320
   }
