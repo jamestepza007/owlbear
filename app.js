@@ -7,9 +7,32 @@ var toasts = document.getElementById('toasts');
 
 urlEl.value = api;
 
+// Try to init OBR for background notifications
+var obrReady = false;
+function tryInitOBR() {
+  if (typeof OBR === 'undefined') { setTimeout(tryInitOBR, 500); return; }
+  OBR.onReady(function() {
+    obrReady = true;
+    // Load saved API url from room metadata
+    OBR.room.getMetadata().then(function(meta) {
+      var saved = meta['trpg-dice/api'];
+      if (saved && !api) {
+        api = saved;
+        urlEl.value = api;
+        restart();
+      }
+    }).catch(function() {});
+  });
+}
+tryInitOBR();
+
 urlEl.addEventListener('change', function() {
   api = urlEl.value.trim();
   localStorage.setItem('trpg_api', api);
+  // Save to room metadata so all players share the URL
+  if (obrReady) {
+    OBR.room.setMetadata({ 'trpg-dice/api': api }).catch(function() {});
+  }
   restart();
 });
 
@@ -28,10 +51,26 @@ function poll() {
       st.className = 'status on';
       rolls.forEach(function(roll) {
         showToast(roll);
+        if (obrReady) showOBRNotification(roll);
         if (roll.timestamp > last) last = roll.timestamp;
       });
     })
     .catch(function() { st.className = 'status err'; });
+}
+
+function showOBRNotification(roll) {
+  var name = roll.characterName || roll.username || '?';
+  var result = roll.result;
+  var system = roll.system || '';
+  var lbl = '';
+  if (system === 'DUNGEON_WORLD') {
+    lbl = result >= 10 ? ' — Strong Hit!' : result >= 7 ? ' — Partial Hit' : ' — Miss';
+  } else if (system === 'CAIN') {
+    lbl = result >= 4 ? ' — Success' : ' — Agony';
+  }
+  var msg = name + ' rolled ' + result + lbl;
+  OBR.notification.show(msg, result >= 10 ? 'SUCCESS' : result >= 7 ? 'WARNING' : 'ERROR')
+    .catch(function() {});
 }
 
 function showToast(roll) {
@@ -54,7 +93,7 @@ function showToast(roll) {
   d.className = 'toast ' + type;
   d.innerHTML =
     '<div class="th"><div class="tn">' + icon + ' ' + name + '</div>' +
-    '<div class="ts">' + (system||'').replace('_',' ') + '</div></div>' +
+    '<div class="ts">' + system.replace('_',' ') + '</div></div>' +
     '<div class="tb"><div class="num">' + result + '</div><div>' +
     '<div style="font-size:9px;color:#555;font-family:monospace">' + (expression||'') + '</div>' +
     (lbl ? '<div class="lbl ' + lblClass + '">' + lbl + '</div>' : '') +
