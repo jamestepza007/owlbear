@@ -7,32 +7,9 @@ var toasts = document.getElementById('toasts');
 
 urlEl.value = api;
 
-// Try to init OBR for background notifications
-var obrReady = false;
-function tryInitOBR() {
-  if (typeof OBR === 'undefined') { setTimeout(tryInitOBR, 500); return; }
-  OBR.onReady(function() {
-    obrReady = true;
-    // Load saved API url from room metadata
-    OBR.room.getMetadata().then(function(meta) {
-      var saved = meta['trpg-dice/api'];
-      if (saved && !api) {
-        api = saved;
-        urlEl.value = api;
-        restart();
-      }
-    }).catch(function() {});
-  });
-}
-tryInitOBR();
-
 urlEl.addEventListener('change', function() {
   api = urlEl.value.trim();
   localStorage.setItem('trpg_api', api);
-  // Save to room metadata so all players share the URL
-  if (obrReady) {
-    OBR.room.setMetadata({ 'trpg-dice/api': api }).catch(function() {});
-  }
   restart();
 });
 
@@ -51,32 +28,46 @@ function poll() {
       st.className = 'status on';
       rolls.forEach(function(roll) {
         showToast(roll);
-        if (obrReady) showOBRNotification(roll);
+        sendOBRNotification(roll);
         if (roll.timestamp > last) last = roll.timestamp;
       });
     })
     .catch(function() { st.className = 'status err'; });
 }
 
-function showOBRNotification(roll) {
+// Send notification to Owlbear via postMessage to parent
+function sendOBRNotification(roll) {
   var name = roll.characterName || roll.username || '?';
   var result = roll.result;
   var system = roll.system || '';
   var lbl = '';
+  var severity = 'INFO';
+
   if (system === 'DUNGEON_WORLD') {
-    lbl = result >= 10 ? ' — Strong Hit!' : result >= 7 ? ' — Partial Hit' : ' — Miss';
+    if (result >= 10) { lbl = ' — Strong Hit!'; severity = 'SUCCESS'; }
+    else if (result >= 7) { lbl = ' — Partial Hit'; severity = 'WARNING'; }
+    else { lbl = ' — Miss'; severity = 'ERROR'; }
   } else if (system === 'CAIN') {
-    lbl = result >= 4 ? ' — Success' : ' — Agony';
+    if (result >= 4) { lbl = ' — Success'; severity = 'SUCCESS'; }
+    else { lbl = ' — Agony'; severity = 'ERROR'; }
   }
-  var msg = name + ' rolled ' + result + lbl;
-  OBR.notification.show(msg, result >= 10 ? 'SUCCESS' : result >= 7 ? 'WARNING' : 'ERROR')
-    .catch(function() {});
+
+  var msg = '\uD83C\uDFB2 ' + name + ' rolled ' + result + lbl;
+
+  // Try postMessage to parent (Owlbear)
+  try {
+    window.parent.postMessage({
+      type: 'OBR_NOTIFICATION',
+      message: msg,
+      severity: severity
+    }, '*');
+  } catch(e) {}
 }
 
 function showToast(roll) {
   var result = roll.result, expression = roll.expression,
       characterName = roll.characterName, username = roll.username,
-      system = roll.system, min = roll.min, max = roll.max;
+      system = roll.system || '', min = roll.min, max = roll.max;
   var type = result === max ? 'leg' : result === min ? 'cat' : '';
   var name = characterName || username || '?';
   var icon = type === 'leg' ? '\u2728' : type === 'cat' ? '\uD83D\uDC80' : '\uD83C\uDFB2';

@@ -8,8 +8,5 @@
     "popover": "https://jamestepza007.github.io/owlbear/index.html",
     "height": 500,
     "width": 320
-  },
-  "background": {
-    "script": "https://jamestepza007.github.io/owlbear/background.js"
   }
 }
