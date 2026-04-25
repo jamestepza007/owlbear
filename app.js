@@ -1,105 +1,69 @@
-const POLL_INTERVAL = 2000;
-let lastSeen = Date.now();
-let pollTimer = null;
-let apiUrl = '';
-let isConnected = false;
+var api = localStorage.getItem('trpg_api') || '';
+var last = Date.now();
+var timer = null;
+var st = document.getElementById('st');
+var urlEl = document.getElementById('url');
+var toasts = document.getElementById('toasts');
 
-const statusEl = document.getElementById('status');
-const apiInput = document.getElementById('apiUrl');
-const toastsEl = document.getElementById('toasts');
+urlEl.value = api;
 
-async function initOBR() {
-  if (typeof OBR === 'undefined') {
-    setTimeout(initOBR, 500);
-    return;
-  }
+urlEl.addEventListener('change', function() {
+  api = urlEl.value.trim();
+  localStorage.setItem('trpg_api', api);
+  restart();
+});
 
-  OBR.onReady(async () => {
-    try {
-      const metadata = await OBR.room.getMetadata();
-      const saved = metadata['trpg-sheet.dice/config'];
-      if (saved?.apiUrl) {
-        apiUrl = saved.apiUrl;
-        apiInput.value = apiUrl;
-        startPolling();
-      }
-    } catch(e) {}
-
-    apiInput.addEventListener('change', async () => {
-      apiUrl = apiInput.value.trim();
-      try {
-        await OBR.room.setMetadata({ 'trpg-sheet.dice/config': { apiUrl } });
-      } catch(e) {}
-      startPolling();
-    });
-  });
-}
-
-function startPolling() {
-  if (pollTimer) clearInterval(pollTimer);
-  if (!apiUrl) return;
+function restart() {
+  clearInterval(timer);
+  if (!api) return;
   poll();
-  pollTimer = setInterval(poll, POLL_INTERVAL);
+  timer = setInterval(poll, 2000);
 }
 
-async function poll() {
-  if (!apiUrl) return;
-  try {
-    const res = await fetch(`${apiUrl}/dice/recent?since=${lastSeen}`);
-    if (!res.ok) throw new Error('bad response');
-    const rolls = await res.json();
-    isConnected = true;
-    statusEl.className = 'status connected';
-    for (const roll of rolls) {
-      showToast(roll);
-      if (roll.timestamp > lastSeen) lastSeen = roll.timestamp;
-    }
-  } catch {
-    isConnected = false;
-    statusEl.className = 'status error';
-  }
+function poll() {
+  if (!api) return;
+  fetch(api + '/dice/recent?since=' + last)
+    .then(function(r) { if (!r.ok) throw 0; return r.json(); })
+    .then(function(rolls) {
+      st.className = 'status on';
+      rolls.forEach(function(roll) {
+        showToast(roll);
+        if (roll.timestamp > last) last = roll.timestamp;
+      });
+    })
+    .catch(function() { st.className = 'status err'; });
 }
 
 function showToast(roll) {
-  const { result, expression, characterName, username, system, min, max } = roll;
-  let type = 'normal';
-  if (result === max) type = 'legendary';
-  else if (result === min) type = 'catastrophic';
-
-  let label = '';
+  var result = roll.result, expression = roll.expression,
+      characterName = roll.characterName, username = roll.username,
+      system = roll.system, min = roll.min, max = roll.max;
+  var type = result === max ? 'leg' : result === min ? 'cat' : '';
+  var name = characterName || username || '?';
+  var icon = type === 'leg' ? '\u2728' : type === 'cat' ? '\uD83D\uDC80' : '\uD83C\uDFB2';
+  var lbl = '', lblClass = '';
   if (system === 'DUNGEON_WORLD') {
-    if (result >= 10) label = '⚔ Strong Hit (10+)';
-    else if (result >= 7) label = '🛡 Partial Hit (7-9)';
-    else label = '💀 Miss (6-)';
+    if (result >= 10) { lbl = 'Strong Hit (10+)'; lblClass = 'hit'; }
+    else if (result >= 7) { lbl = 'Partial Hit (7-9)'; lblClass = 'partial'; }
+    else { lbl = 'Miss (6-)'; lblClass = 'miss'; }
   } else if (system === 'CAIN') {
-    label = result >= 4 ? `✅ ${result} Success${result > 1 ? 'es' : ''}` : '❌ Divine Agony';
+    lbl = result >= 4 ? 'Success' : 'Agony';
+    lblClass = result >= 4 ? 'hit' : 'miss';
   }
-
-  const name = characterName || username || 'Unknown';
-  const icon = type === 'legendary' ? '✨' : type === 'catastrophic' ? '💀' : '🎲';
-  const labelClass = system === 'DUNGEON_WORLD' ? (result >= 10 ? 'hit' : result >= 7 ? 'partial' : 'miss') : '';
-
-  const toast = document.createElement('div');
-  toast.className = `toast ${type}`;
-  toast.innerHTML = `
-    <div class="toast-header">
-      <div class="toast-char">${icon} ${name}</div>
-      <div class="toast-system">${(system || '').replace('_', ' ')}</div>
-    </div>
-    <div class="toast-body">
-      <div class="toast-number">${result}</div>
-      <div class="toast-detail">
-        <div class="toast-expr">${expression || ''}</div>
-        ${label ? `<div class="toast-label ${labelClass}">${label}</div>` : ''}
-      </div>
-    </div>
-  `;
-  toastsEl.prepend(toast);
-
-  setTimeout(() => {
-    toast.classList.add('fadeout');
-    setTimeout(() => toast.remove(), 400);
-  }, 6000);
+  var d = document.createElement('div');
+  d.className = 'toast ' + type;
+  d.innerHTML =
+    '<div class="th"><div class="tn">' + icon + ' ' + name + '</div>' +
+    '<div class="ts">' + (system||'').replace('_',' ') + '</div></div>' +
+    '<div class="tb"><div class="num">' + result + '</div><div>' +
+    '<div style="font-size:9px;color:#555;font-family:monospace">' + (expression||'') + '</div>' +
+    (lbl ? '<div class="lbl ' + lblClass + '">' + lbl + '</div>' : '') +
+    '</div></div>';
+  toasts.prepend(d);
+  setTimeout(function() {
+    d.classList.add('out');
+    setTimeout(function() { d.remove(); }, 300);
+  }, 5000);
 }
 
-initOBR();
+restart();

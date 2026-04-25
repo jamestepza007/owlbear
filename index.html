@@ -4,37 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TRPG Sheet Dice</title>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: #111; font-family: 'Segoe UI', sans-serif; padding: 10px; }
-  .config { display: flex; align-items: center; gap: 8px; }
-  .status { width: 8px; height: 8px; border-radius: 50%; background: #555; flex-shrink: 0; }
-  .status.on { background: #4ade80; box-shadow: 0 0 6px #4ade80; }
-  .status.err { background: #f87171; }
-  label { font-size: 10px; color: #888; text-transform: uppercase; flex-shrink: 0; }
-  input { flex: 1; background: #000; border: 1px solid #333; border-radius: 4px; color: #e8e8e8; font-size: 10px; padding: 4px 6px; font-family: monospace; min-width: 0; }
-  input:focus { outline: none; border-color: #c9a84c; }
-  #toasts { position: fixed; bottom: 10px; left: 10px; right: 10px; display: flex; flex-direction: column-reverse; gap: 6px; pointer-events: none; }
-  .toast { background: rgba(14,10,4,0.97); border: 1px solid #3a2a10; border-radius: 6px; padding: 8px 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.6); animation: si 0.3s ease; }
-  .toast.leg { border-color: #c9a84c; }
-  .toast.cat { border-color: #8b0000; }
-  .toast.out { animation: so 0.3s ease forwards; }
-  .th { display: flex; justify-content: space-between; margin-bottom: 3px; }
-  .tn { font-size: 10px; color: #c9a84c; font-weight: 600; }
-  .ts { font-size: 8px; color: #444; text-transform: uppercase; }
-  .tb { display: flex; align-items: baseline; gap: 8px; }
-  .num { font-size: 28px; font-weight: 900; color: #e8e8e8; line-height: 1; font-family: monospace; }
-  .leg .num { color: #ffd700; }
-  .cat .num { color: #f87171; }
-  .lbl { font-size: 9px; font-weight: 600; margin-top: 2px; }
-  .leg .lbl { color: #c9a84c; }
-  .cat .lbl { color: #f87171; }
-  .hit { color: #4ade80; }
-  .partial { color: #facc15; }
-  .miss { color: #f87171; }
-  @keyframes si { from { opacity:0; transform:translateX(-16px); } to { opacity:1; transform:none; } }
-  @keyframes so { from { opacity:1; } to { opacity:0; transform:translateX(-16px); } }
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div class="config">
@@ -43,63 +13,6 @@
   <input id="url" type="text" placeholder="https://...railway.app/api" />
 </div>
 <div id="toasts"></div>
-<script>
-  var api = localStorage.getItem('trpg_api') || '';
-  var last = Date.now();
-  var timer = null;
-  var st = document.getElementById('st');
-  var urlEl = document.getElementById('url');
-  var toasts = document.getElementById('toasts');
-  urlEl.value = api;
-  urlEl.addEventListener('change', function() {
-    api = urlEl.value.trim();
-    localStorage.setItem('trpg_api', api);
-    restart();
-  });
-  function restart() {
-    clearInterval(timer);
-    if (!api) return;
-    poll();
-    timer = setInterval(poll, 2000);
-  }
-  function poll() {
-    if (!api) return;
-    fetch(api + '/dice/recent?since=' + last)
-      .then(function(r) { if (!r.ok) throw 0; return r.json(); })
-      .then(function(rolls) {
-        st.className = 'status on';
-        rolls.forEach(function(roll) {
-          showToast(roll);
-          if (roll.timestamp > last) last = roll.timestamp;
-        });
-      })
-      .catch(function() { st.className = 'status err'; });
-  }
-  function showToast(roll) {
-    var result = roll.result, expression = roll.expression, characterName = roll.characterName,
-        username = roll.username, system = roll.system, min = roll.min, max = roll.max;
-    var type = result === max ? 'leg' : result === min ? 'cat' : '';
-    var name = characterName || username || '?';
-    var icon = type === 'leg' ? '&#10024;' : type === 'cat' ? '&#128128;' : '&#127922;';
-    var lbl = '', lblClass = '';
-    if (system === 'DUNGEON_WORLD') {
-      if (result >= 10) { lbl = 'Strong Hit (10+)'; lblClass = 'hit'; }
-      else if (result >= 7) { lbl = 'Partial Hit (7-9)'; lblClass = 'partial'; }
-      else { lbl = 'Miss (6-)'; lblClass = 'miss'; }
-    } else if (system === 'CAIN') {
-      lbl = result >= 4 ? 'Success' : 'Agony';
-    }
-    var d = document.createElement('div');
-    d.className = 'toast ' + type;
-    d.innerHTML = '<div class="th"><div class="tn">' + icon + ' ' + name + '</div><div class="ts">' + (system||'').replace('_',' ') + '</div></div>' +
-      '<div class="tb"><div class="num">' + result + '</div><div>' +
-      '<div style="font-size:9px;color:#555;font-family:monospace">' + (expression||'') + '</div>' +
-      (lbl ? '<div class="lbl ' + lblClass + '">' + lbl + '</div>' : '') +
-      '</div></div>';
-    toasts.prepend(d);
-    setTimeout(function() { d.classList.add('out'); setTimeout(function() { d.remove(); }, 300); }, 5000);
-  }
-  restart();
-</script>
+<script src="app.js"></script>
 </body>
 </html>
