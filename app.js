@@ -7,22 +7,32 @@ var toasts = document.getElementById('toasts');
 
 urlEl.value = api;
 
-// Init OBR
+// Get OBR from bundled SDK
+var OBR = (typeof OBRModule !== 'undefined' && OBRModule.default) ? OBRModule.default : null;
 var obrReady = false;
-if (typeof OBRModule !== 'undefined' && OBRModule.default) {
-  var OBR = OBRModule.default;
+
+if (OBR) {
   OBR.onReady(function() {
     obrReady = true;
-  });
-} else if (typeof OBR !== 'undefined') {
-  OBR.onReady(function() {
-    obrReady = true;
+    // Load saved URL from room metadata
+    OBR.room.getMetadata().then(function(meta) {
+      var saved = meta['trpg-dice/api'];
+      if (saved && !api) {
+        api = saved;
+        urlEl.value = api;
+        restart();
+      }
+    }).catch(function() {});
   });
 }
 
 urlEl.addEventListener('change', function() {
   api = urlEl.value.trim();
   localStorage.setItem('trpg_api', api);
+  // Save to room so all players share the URL
+  if (OBR && obrReady) {
+    OBR.room.setMetadata({ 'trpg-dice/api': api }).catch(function() {});
+  }
   restart();
 });
 
@@ -41,7 +51,7 @@ function poll() {
       st.className = 'status on';
       rolls.forEach(function(roll) {
         showToast(roll);
-        if (obrReady) showOBRNotification(roll);
+        if (obrReady && OBR) showOBRNotification(roll);
         if (roll.timestamp > last) last = roll.timestamp;
       });
     })
@@ -62,10 +72,8 @@ function showOBRNotification(roll) {
     if (result >= 4) { lbl = ' — Success'; variant = 'SUCCESS'; }
     else { lbl = ' — Agony'; variant = 'ERROR'; }
   }
-  try {
-    var theOBR = (typeof OBRModule !== 'undefined' && OBRModule.default) ? OBRModule.default : OBR;
-    theOBR.notification.show('\uD83C\uDFB2 ' + name + ' rolled ' + result + lbl, variant);
-  } catch(e) {}
+  OBR.notification.show('\uD83C\uDFB2 ' + name + ' rolled ' + result + lbl, variant)
+    .catch(function() {});
 }
 
 function showToast(roll) {
