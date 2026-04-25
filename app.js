@@ -7,6 +7,19 @@ var toasts = document.getElementById('toasts');
 
 urlEl.value = api;
 
+// Init OBR
+var obrReady = false;
+if (typeof OBRModule !== 'undefined' && OBRModule.default) {
+  var OBR = OBRModule.default;
+  OBR.onReady(function() {
+    obrReady = true;
+  });
+} else if (typeof OBR !== 'undefined') {
+  OBR.onReady(function() {
+    obrReady = true;
+  });
+}
+
 urlEl.addEventListener('change', function() {
   api = urlEl.value.trim();
   localStorage.setItem('trpg_api', api);
@@ -28,39 +41,30 @@ function poll() {
       st.className = 'status on';
       rolls.forEach(function(roll) {
         showToast(roll);
-        sendOBRNotification(roll);
+        if (obrReady) showOBRNotification(roll);
         if (roll.timestamp > last) last = roll.timestamp;
       });
     })
     .catch(function() { st.className = 'status err'; });
 }
 
-// Send notification to Owlbear via postMessage to parent
-function sendOBRNotification(roll) {
+function showOBRNotification(roll) {
   var name = roll.characterName || roll.username || '?';
   var result = roll.result;
   var system = roll.system || '';
   var lbl = '';
-  var severity = 'INFO';
-
+  var variant = 'DEFAULT';
   if (system === 'DUNGEON_WORLD') {
-    if (result >= 10) { lbl = ' — Strong Hit!'; severity = 'SUCCESS'; }
-    else if (result >= 7) { lbl = ' — Partial Hit'; severity = 'WARNING'; }
-    else { lbl = ' — Miss'; severity = 'ERROR'; }
+    if (result >= 10) { lbl = ' — Strong Hit!'; variant = 'SUCCESS'; }
+    else if (result >= 7) { lbl = ' — Partial Hit'; variant = 'WARNING'; }
+    else { lbl = ' — Miss'; variant = 'ERROR'; }
   } else if (system === 'CAIN') {
-    if (result >= 4) { lbl = ' — Success'; severity = 'SUCCESS'; }
-    else { lbl = ' — Agony'; severity = 'ERROR'; }
+    if (result >= 4) { lbl = ' — Success'; variant = 'SUCCESS'; }
+    else { lbl = ' — Agony'; variant = 'ERROR'; }
   }
-
-  var msg = '\uD83C\uDFB2 ' + name + ' rolled ' + result + lbl;
-
-  // Try postMessage to parent (Owlbear)
   try {
-    window.parent.postMessage({
-      type: 'OBR_NOTIFICATION',
-      message: msg,
-      severity: severity
-    }, '*');
+    var theOBR = (typeof OBRModule !== 'undefined' && OBRModule.default) ? OBRModule.default : OBR;
+    theOBR.notification.show('\uD83C\uDFB2 ' + name + ' rolled ' + result + lbl, variant);
   } catch(e) {}
 }
 
