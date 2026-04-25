@@ -1,6 +1,6 @@
 {
   "name": "TRPG Sheet Dice",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "manifest_version": 1,
   "action": {
     "title": "TRPG Sheet Dice",
@@ -8,5 +8,8 @@
     "popover": "https://jamestepza007.github.io/owlbear/index.html",
     "height": 500,
     "width": 320
+  },
+  "background": {
+    "script": "https://jamestepza007.github.io/owlbear/background.js"
   }
 }
