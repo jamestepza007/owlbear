@@ -74,8 +74,7 @@ function showOBRNotification(roll) {
     icon = '\uD83C\uDFB2';
   }
 
-  // Make result number stand out
-  var msg = icon + ' ' + name + '  [ ' + result + ' ]  ' + lbl;
+  var msg = icon + ' ' + name + ' — ' + result;
   OBR.notification.show(msg, variant).catch(function() {});
 }
 
