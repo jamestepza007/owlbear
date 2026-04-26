@@ -107,13 +107,17 @@ function addLogEntry(roll) {
   var time = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
   var d = document.createElement('div');
   d.className = 'entry ' + type;
+  // For CAIN show pool string if available
+  var exprDisplay = (system === 'CAIN' && roll.details && roll.details.poolStr)
+    ? '[' + roll.details.poolStr + ']'
+    : (expression || '');
   d.innerHTML =
     '<div class="entry-top">' +
       '<div class="entry-name">' + name + '</div>' +
       '<div class="entry-result">' + result + '</div>' +
     '</div>' +
     '<div class="entry-bottom">' +
-      '<div class="entry-expr">' + (expression||'') + '</div>' +
+      '<div class="entry-expr">' + exprDisplay + '</div>' +
       (lbl ? '<div class="entry-lbl ' + lblClass + '">' + lbl + '</div>' : '') +
       '<div class="entry-time">' + time + '</div>' +
     '</div>';
