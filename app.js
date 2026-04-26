@@ -100,8 +100,7 @@ function addLogEntry(roll) {
     else if (result >= 7) { lbl = 'Partial Hit (7-9)'; lblClass = 'partial'; }
     else { lbl = 'Miss (6-)'; lblClass = 'miss'; }
   } else if (system === 'CAIN') {
-    if (result >= 4) { lbl = 'Success'; lblClass = 'success'; }
-    else { lbl = 'Agony'; lblClass = 'agony'; }
+    lbl = ''; lblClass = ''; // no label for CAIN - pool speaks for itself
   }
   var now = new Date();
   var time = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
