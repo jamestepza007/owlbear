@@ -1,11 +1,14 @@
 var api = localStorage.getItem('trpg_api') || '';
+var campId = localStorage.getItem('trpg_camp') || '';
 var last = Date.now();
 var timer = null;
 var st = document.getElementById('st');
 var urlEl = document.getElementById('url');
+var campEl = document.getElementById('campId');
 var log = document.getElementById('log');
 
 urlEl.value = api;
+campEl.value = campId;
 
 var OBR = (typeof OBRModule !== 'undefined' && OBRModule.default) ? OBRModule.default : null;
 var obrReady = false;
@@ -14,12 +17,15 @@ if (OBR) {
   OBR.onReady(function() {
     obrReady = true;
     OBR.room.getMetadata().then(function(meta) {
-      var saved = meta['trpg-dice/api'];
-      if (saved && !api) {
-        api = saved;
+      if (meta['trpg-dice/api'] && !api) {
+        api = meta['trpg-dice/api'];
         urlEl.value = api;
-        restart();
       }
+      if (meta['trpg-dice/camp'] && !campId) {
+        campId = meta['trpg-dice/camp'];
+        campEl.value = campId;
+      }
+      if (api) restart();
     }).catch(function() {});
   });
 }
@@ -27,15 +33,19 @@ if (OBR) {
 urlEl.addEventListener('change', function() {
   api = urlEl.value.trim();
   localStorage.setItem('trpg_api', api);
-  if (OBR && obrReady) {
-    OBR.room.setMetadata({ 'trpg-dice/api': api }).catch(function() {});
-  }
+  if (OBR && obrReady) OBR.room.setMetadata({ 'trpg-dice/api': api }).catch(function() {});
   restart();
 });
 
-function clearLog() {
-  log.innerHTML = '';
-}
+campEl.addEventListener('change', function() {
+  campId = campEl.value.trim();
+  localStorage.setItem('trpg_camp', campId);
+  if (OBR && obrReady) OBR.room.setMetadata({ 'trpg-dice/camp': campId }).catch(function() {});
+  last = Date.now(); // reset so we don't load old rolls
+  restart();
+});
+
+function clearLog() { log.innerHTML = ''; }
 
 function restart() {
   clearInterval(timer);
@@ -44,9 +54,15 @@ function restart() {
   timer = setInterval(poll, 500);
 }
 
+function buildUrl() {
+  var url = api + '/dice/recent?since=' + last;
+  if (campId) url += '&campaignId=' + encodeURIComponent(campId);
+  return url;
+}
+
 function poll() {
   if (!api) return;
-  fetch(api + '/dice/recent?since=' + last)
+  fetch(buildUrl())
     .then(function(r) { if (!r.ok) throw 0; return r.json(); })
     .then(function(rolls) {
       st.className = 'status on';
@@ -65,14 +81,10 @@ function showOBRNotification(roll) {
   var system = roll.system || '';
   var icon = system === 'DUNGEON_WORLD'
     ? (result >= 10 ? '\u2694\uFE0F' : result >= 7 ? '\uD83D\uDEE1\uFE0F' : '\uD83D\uDC80')
-    : system === 'CAIN'
-    ? (result >= 4 ? '\u2705' : '\u274C')
-    : '\uD83C\uDFB2';
+    : system === 'CAIN' ? (result >= 4 ? '\u2705' : '\u274C') : '\uD83C\uDFB2';
   var variant = system === 'DUNGEON_WORLD'
     ? (result >= 10 ? 'SUCCESS' : result >= 7 ? 'WARNING' : 'ERROR')
-    : system === 'CAIN'
-    ? (result >= 4 ? 'SUCCESS' : 'ERROR')
-    : 'DEFAULT';
+    : system === 'CAIN' ? (result >= 4 ? 'SUCCESS' : 'ERROR') : 'DEFAULT';
   OBR.notification.show(icon + ' ' + name + ' \u2014 ' + result, variant).catch(function() {});
 }
 
@@ -93,7 +105,6 @@ function addLogEntry(roll) {
   }
   var now = new Date();
   var time = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
-
   var d = document.createElement('div');
   d.className = 'entry ' + type;
   d.innerHTML =
@@ -106,9 +117,7 @@ function addLogEntry(roll) {
       (lbl ? '<div class="entry-lbl ' + lblClass + '">' + lbl + '</div>' : '') +
       '<div class="entry-time">' + time + '</div>' +
     '</div>';
-
   log.appendChild(d);
-  // Auto scroll to bottom
   log.scrollTop = log.scrollHeight;
 }
 
