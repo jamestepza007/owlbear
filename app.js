@@ -1,10 +1,3 @@
-// Inject risk die styles
-(function() {
-  var s = document.createElement('style');
-  s.textContent = '.entry-risk { font-size: 10px; color: #f0a500; margin-top: 2px; } .entry-risk.risk-bad { color: #ff4444; font-weight: bold; animation: pulse 1s infinite; } @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }';
-  document.head.appendChild(s);
-})();
-
 var api = localStorage.getItem('trpg_api') || '';
 var campId = localStorage.getItem('trpg_camp') || '';
 var last = Date.now();
@@ -95,6 +88,13 @@ function showOBRNotification(roll) {
   OBR.notification.show(icon + ' ' + name + ' \u2014 ' + result, variant).catch(function() {});
 }
 
+function getRiskDieHtml(roll) {
+  var rd = roll.riskDie != null ? roll.riskDie : (roll.details && roll.details.riskDie != null ? roll.details.riskDie : null);
+  var ri = roll.isRisky || (roll.details && typeof roll.details.mode === 'string' && roll.details.mode.indexOf('risky') !== -1);
+  if (!ri || rd == null) return '';
+  return '<div class="entry-risk' + (rd === 1 ? ' risk-bad' : '') + '">⚠ Risk Die: ' + rd + (rd === 1 ? ' — BAD THING HAPPENS' : '') + '</div>';
+}
+
 function addLogEntry(roll) {
   var result = roll.result, expression = roll.expression,
       characterName = roll.characterName, username = roll.username,
@@ -126,11 +126,7 @@ function addLogEntry(roll) {
       '<div class="entry-expr">' + exprDisplay + '</div>' +
       (lbl ? '<div class="entry-lbl ' + lblClass + '">' + lbl + '</div>' : '') +
       '<div class="entry-time">' + time + '</div>' +
-      (function() {
-        var rd = (roll.riskDie != null ? roll.riskDie : (roll.details && roll.details.riskDie != null ? roll.details.riskDie : null));
-        var ri = roll.isRisky || (roll.details && (roll.details.mode || '').includes('risky'));
-        return ri && rd != null ? '<div class="entry-risk' + (rd === 1 ? ' risk-bad' : '') + '">&#x26A0; Risk Die: ' + rd + (rd === 1 ? ' — BAD THING HAPPENS' : '') + '</div>' : '';
-      })() +
+      getRiskDieHtml(roll) +
     '</div>';
   log.appendChild(d);
   log.scrollTop = log.scrollHeight;
