@@ -126,7 +126,11 @@ function addLogEntry(roll) {
       '<div class="entry-expr">' + exprDisplay + '</div>' +
       (lbl ? '<div class="entry-lbl ' + lblClass + '">' + lbl + '</div>' : '') +
       '<div class="entry-time">' + time + '</div>' +
-      (roll.isRisky && roll.riskDie != null ? '<div class="entry-risk' + (roll.riskDie === 1 ? ' risk-bad' : '') + '">&#x26A0; Risk Die: ' + roll.riskDie + (roll.riskDie === 1 ? ' — BAD THING HAPPENS' : '') + '</div>' : '') +
+      (function() {
+        var rd = (roll.riskDie != null ? roll.riskDie : (roll.details && roll.details.riskDie != null ? roll.details.riskDie : null));
+        var ri = roll.isRisky || (roll.details && (roll.details.mode || '').includes('risky'));
+        return ri && rd != null ? '<div class="entry-risk' + (rd === 1 ? ' risk-bad' : '') + '">&#x26A0; Risk Die: ' + rd + (rd === 1 ? ' — BAD THING HAPPENS' : '') + '</div>' : '';
+      })() +
     '</div>';
   log.appendChild(d);
   log.scrollTop = log.scrollHeight;
