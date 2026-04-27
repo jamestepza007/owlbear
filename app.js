@@ -1,3 +1,10 @@
+// Inject risk die styles
+(function() {
+  var s = document.createElement('style');
+  s.textContent = '.entry-risk { font-size: 10px; color: #f0a500; margin-top: 2px; } .entry-risk.risk-bad { color: #ff4444; font-weight: bold; animation: pulse 1s infinite; } @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }';
+  document.head.appendChild(s);
+})();
+
 var api = localStorage.getItem('trpg_api') || '';
 var campId = localStorage.getItem('trpg_camp') || '';
 var last = Date.now();
@@ -119,6 +126,7 @@ function addLogEntry(roll) {
       '<div class="entry-expr">' + exprDisplay + '</div>' +
       (lbl ? '<div class="entry-lbl ' + lblClass + '">' + lbl + '</div>' : '') +
       '<div class="entry-time">' + time + '</div>' +
+      (roll.isRisky && roll.riskDie != null ? '<div class="entry-risk' + (roll.riskDie === 1 ? ' risk-bad' : '') + '">&#x26A0; Risk Die: ' + roll.riskDie + (roll.riskDie === 1 ? ' — BAD THING HAPPENS' : '') + '</div>' : '') +
     '</div>';
   log.appendChild(d);
   log.scrollTop = log.scrollHeight;
